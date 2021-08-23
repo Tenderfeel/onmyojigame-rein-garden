@@ -123,6 +123,17 @@ export default defineComponent({
           title: "再覚醒",
           key: "action",
           slots: { customRender: "action" },
+          filters: [
+            {
+              text: '覚醒済み',
+              value: 1,
+            },
+            {
+              text: '未覚醒',
+              value: 0,
+            },
+          ],
+          onFilter: (value, record) => record.completed === Boolean(value),
         },
       ],
     };
