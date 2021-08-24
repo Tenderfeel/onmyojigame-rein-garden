@@ -1,35 +1,21 @@
 <template>
-  <a-layout style="min-height: 100vh">
-    <a-layout-content>
-      <a-collapse v-model:activeKey="activeKey" accordion>
-        <a-collapse-panel key="1" header="印">
-          <a-checkbox-group
-            v-model:value="selectType"
-            name="checkboxgroup"
-            :options="types"
-          />
-        </a-collapse-panel>
-        <a-collapse-panel key="2" header="レア">
-          <a-checkbox-group
-            v-model:value="selectRare"
-            name="checkboxgroup"
-            :options="rares"
-          />
-        </a-collapse-panel>
-      </a-collapse>
+  <a-layout style="min-height: 100vh" :hasSider="true">
 
+  <!-- content -->
+  <a-layout>
+    <a-layout-content>
+      <!-- Table -->
       <a-table
         :columns="columns"
         :data-source="computedChars"
+        size="small"
         :pagination="{
           defaultPageSize: 30,
         }"
       >
         <template #type="{ text: type }">
           <span>
-            <a-tag v-for="t in type" :key="t" color="green">
-              {{ t }}
-            </a-tag>
+            <TypeIcon v-for="t in type" :key="t" :data="t" />
           </span>
         </template>
         <template #action="{ record }">
@@ -43,6 +29,56 @@
       </div>
     </a-layout-footer>
   </a-layout>
+
+    <a-layout-sider 
+      breakpoint="md"
+      collapsed-width="0"
+      :zeroWidthTriggerStyle="{left: '-36px', 'border-radius': '2px 0 0 2px'}"
+      :style="{ height: '100vh', position: 'sticky', right: 0, top:0, zIndex: 1000 }"
+      :width="siderWidth"
+      @breakpoint="onBreakpoint"
+    >
+    <a-card :style="{ margin: '8px'}" size="small">
+      <a-statistic title="再覚醒" :value="completed" :value-style="{ fontSize: '20px' }">
+        <template #suffix>
+          <span style="font-size: 14px">/ {{chars.length}}</span>
+        </template>
+      </a-statistic>
+    </a-card>
+
+    <a-card title="印" :style="{ margin: '8px'}" size="small">
+      <a-checkbox-group
+        v-model:value="selectType"
+        name="checkboxgroup"
+      >
+      <a-row :gutter="[8, { xs: 8, sm: 16, md: 16, lg: 16 }]">
+        <a-col v-for="type in types" :key="type.id" :xs="24" :sm="12">
+          <a-checkbox :value="type.name">
+            <TypeIcon :data="type.name" />
+          </a-checkbox>
+        </a-col>
+      </a-row>
+      </a-checkbox-group>
+    </a-card>
+
+    <a-card title="レア" :style="{ margin: '8px'}" size="small">
+      <a-checkbox-group
+          v-model:value="selectRare"
+          name="checkboxgroup"
+      >
+      <a-row :gutter="[8, { xs: 8, sm: 16, md: 16, lg: 16 }]">
+        <a-col v-for="rare in rares" :key="rare" :xs="24" :sm="12">
+          <a-checkbox :value="rare">
+            {{rare}}
+          </a-checkbox>
+        </a-col>
+      </a-row>
+
+       </a-checkbox-group>
+    </a-card>
+    </a-layout-sider>
+
+  </a-layout>
 </template>
 
 <script>
@@ -50,26 +86,23 @@ import { defineComponent, ref } from "vue";
 import TypeData from "./data/type.js";
 import CharData from "./data/characters.js";
 
+import TypeIcon from "./components/TypeIcon.vue";
+
 export default defineComponent({
   name: "App",
-  components: {},
+  components: { TypeIcon },
   setup() {
     // レア度
-    const rares = Object.keys(CharData).map((rare) => ({
-      label: rare,
-      value: rare,
-    }));
+    const rares = Object.keys(CharData);
 
     // 印
-    const types = TypeData.map((type) => {
-      return {
-        label: type.name,
-        value: type.name,
-      };
-    });
+    const types = [...TypeData];
 
     const chars = ref([]);
 
+    const siderWidth = ref(200)
+
+  // 式神初期データ
     const defaultData = Object.entries(CharData).reduce(
       (accu, [rare, list]) => {
         return accu.concat(
@@ -91,10 +124,17 @@ export default defineComponent({
       chars.value = defaultData;
     }
 
+    const onBreakpoint = broken => {
+      console.log(broken);
+      siderWidth.value = broken ? 110 : 200
+    };
+
     return {
       types,
       rares,
       chars,
+      onBreakpoint,
+      siderWidth
     };
   },
   data() {
@@ -139,6 +179,7 @@ export default defineComponent({
     };
   },
   computed: {
+    // chars
     computedChars() {
       const chars = this.chars.filter(({ type, rare }) => {
         const typeCheck = this.selectType.every((st) => {
@@ -150,6 +191,14 @@ export default defineComponent({
 
       return chars;
     },
+
+    // 再覚醒達成率
+    completed() {
+      return this.chars.reduce((acc, cur) => {
+        return acc + cur.completed
+      }, 0)
+    },
+
   },
   methods: {
     handleSwitch() {
