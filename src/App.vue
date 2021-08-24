@@ -22,6 +22,35 @@
           <a-switch v-model:checked="record.completed" @click="handleSwitch" />
         </template>
       </a-table>
+
+      <!-- Info -->
+
+      <a-list item-layout="vertical" :data-source="types" bordered size="small" :style="{margin: '8px', background: '#fff'}">
+        <template #renderItem="{ item }">
+          <a-list-item>
+            <a-list-item-meta>
+              <template #title>
+               {{item.name}}
+              </template>
+              <template #description>
+               {{item.description}}
+              </template>
+              <template #avatar>
+                <TypeIcon  :data="item.name" />
+              </template>
+            </a-list-item-meta>
+            <!-- Level info -->
+            <a-list size="small" bordered :data-source="item.level">
+              <template #renderItem="{ item }">
+                <a-list-item>{{ item }}</a-list-item>
+              </template>
+            </a-list>
+          </a-list-item>
+        </template>
+
+            
+      </a-list>
+
     </a-layout-content>
     <a-layout-footer style="padding: 1rem">
       <div style="text-align: center">
@@ -125,7 +154,6 @@ export default defineComponent({
     }
 
     const onBreakpoint = broken => {
-      console.log(broken);
       siderWidth.value = broken ? 110 : 200
     };
 
